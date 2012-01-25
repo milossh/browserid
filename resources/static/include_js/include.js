@@ -961,7 +961,12 @@
           // clear the window handle
           w = undefined;
           // ignore err!
-          callback(err ? null : (r ? r : null));
+          var assertion = r.assertion;
+          callback(err ? null : (assertion ? assertion : null));
+
+          if(assertion && r.focus) {
+            window.alert("You are now logged in");
+          }
         });
       }
     };

@@ -97,7 +97,38 @@
     equal(inst.getVal(), true, "superclass function added");
     equal(inst.getVal2(), false, "sublcass function added");
     equal(inst.getAnotherVal(), 4, "overridden function works properly");
+  });
 
+  /*
+  test("Class with main declaration and mixin", function() {
+    var Sup = BrowserID.Class({
+      init: function() { },
+    }, {
+      getMixinVal: function() { return "mixin val" }
+    });
+
+    var inst = Sup.create();
+
+    equal(inst.getMixinVal(), "mixin val", "mixin is added");
+  });
+  */
+
+  test("Class.extend with superclass and mixin", function() {
+    var Sup = BrowserID.Class({
+      init: function() { },
+    });
+
+    var Sub = Sup.extend({
+      init: function() { },
+      getVal: function() { return "value" }
+    }, {
+      getMixinVal: function() { return "mixin val" }
+    });
+
+    var inst = Sub.create();
+
+    equal(inst.getVal(), "value", "base is still there");
+    equal(inst.getMixinVal(), "mixin val", "mixin is added");
   });
 
 }());

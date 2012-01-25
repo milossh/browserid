@@ -147,7 +147,7 @@
     equal(actions.info.doConfirmUser, "testuser@testuser.com", "reset password with the correct email");
   });
 
-  test("assertion_generated with null assertion", function() {
+  test("assertion_generated with null assertion - redirect to doPickEmail", function() {
     mediator.publish("assertion_generated", {
       assertion: null
     });
@@ -157,10 +157,12 @@
 
   test("assertion_generated with assertion", function() {
     mediator.publish("assertion_generated", {
-      assertion: "assertion"
+      assertion: "assertion",
+      focus: true
     });
 
-    equal(actions.info.doAssertionGenerated, "assertion", "assertion generated with good assertion");
+    equal(actions.info.doAssertionGenerated.assertion, "assertion", "assertion generated with good assertion");
+    equal(actions.info.doAssertionGenerated.focus, true, "assertion generated, original RP should be focused.");
   });
 
   test("add_email", function() {
@@ -291,6 +293,26 @@
     }
 
     equal(error, "invalid email", "expected exception thrown");
+  });
+
+  test("window_unload without assertion generated, not waiting for email confirmation - calls doCancel", function() {
+    mediator.publish("window_unload");
+    equal(actions.called.doCancel, true, "doCancel called");
+    equal(localStorage.redirectTo, null, "no redirectTo is set, user not waiting for confirmation");
+  });
+
+  test("window_unload without assertion generated, waiting for email confirmation - calls doCancel, sets redirectTo in localStorage", function() {
+    mediator.publish("user_staged", { email: "testuser@testuser.com" });
+    mediator.publish("window_unload");
+    equal(actions.called.doCancel, true, "doCancel called");
+    equal(localStorage.redirectTo, testHelpers.testOrigin, "redirectTo is set, user is waiting for confirmation");
+  });
+
+  test("window_unload with assertion generated - do a whole lot of nothing", function() {
+    mediator.publish("assertion_generated", { assertion: "assertion" });
+    mediator.publish("window_unload");
+    equal(typeof actions.called.doCancel, "undefined", "doCancel not called");
+    equal(localStorage.redirectTo, null, "no redirectTo is set, user not waiting for confirmation");
   });
 
 }());

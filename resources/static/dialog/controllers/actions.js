@@ -30,8 +30,6 @@ BrowserID.Modules.Actions = (function() {
   }
 
   function startRegCheckService(email, verifier, message) {
-    this.confirmEmail = email;
-
     var controller = startService("check_registration", {
       email: email,
       verifier: verifier,
@@ -104,22 +102,23 @@ BrowserID.Modules.Actions = (function() {
       startRegCheckService.call(this, email, "waitForEmailValidation", "email_confirmed");
     },
 
-    doEmailConfirmed: function() {
+    doEmailConfirmed: function(info) {
       var self=this;
       // yay!  now we need to produce an assertion.
-      user.getAssertion(self.confirmEmail, user.getOrigin(), function(assertion) {
+      user.getAssertion(info.email, user.getOrigin(), function(assertion) {
         self.publish("assertion_generated", {
-          assertion: assertion
+          assertion: assertion,
+          focus: true
         });
       }, self.getErrorDialog(errors.getAssertion));
     },
 
-    doAssertionGenerated: function(assertion) {
+    doAssertionGenerated: function(info) {
       // Clear onerror before the call to onsuccess - the code to onsuccess
       // calls window.close, which would trigger the onerror callback if we
       // tried this afterwards.
       onerror = null;
-      if(onsuccess) onsuccess(assertion);
+      if(onsuccess) onsuccess(info);
     },
 
     doNotMe: function() {

@@ -66,7 +66,10 @@ $(function() {
         });
       }
       else if(token && path === "/verify_email_address") {
-        bid.verifyEmailAddress(token);
+        var module = bid.verifyEmailAddress.create();
+        module.start({
+          token: token
+        });
       }
 
       $("a.signOut").click(function(event) {

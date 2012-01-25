@@ -82,6 +82,7 @@ BrowserID.Modules.Dialog = (function() {
   }
 
   function setOrigin(origin) {
+    console.log(origin);
     user.setOrigin(origin);
     dom.setInner("#sitename", user.getHostname());
   }

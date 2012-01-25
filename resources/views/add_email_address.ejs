@@ -5,14 +5,26 @@
 <div id="vAlign" class="display_always">
     <div id="signUpFormWrap">
         <ul class="notifications">
-            <li class="notification error" id="cannotconfirm"><%= gettext('Error encountered while attempting to confirm your address. Have you previously verified this address?') %></li>
-            <li class="notification error" id="cannotcomplete"><%= gettext('Error encountered trying to complete registration.') %></li>
+            <li class="notification error" id="cannotconfirm">
+              <%= gettext('Error encountered while attempting to confirm your address. Have you previously verified this address?') %>
+            </li>
+            <li class="notification error" id="cannotcomplete">
+              <%= gettext('Error encountered trying to complete registration.') %>
+            </li>
         </ul>
 
         <form id="signUpForm" class="cf">
-            <p class="hint siteinfo"><%= gettext('Finish signing into: ') %><strong><span class="website"></span></strong></p>
+            <h1 class="serif">
+              <%= gettext('Email Verification') %>
+            </h1>
 
-            <h1 class="serif"><%= gettext('Email Verification') %></h1>
+            <p class="hint password_entry">
+              <%- gettext('To finish signing into <strong class="website"></strong>, pick a password for BrowserID.') %>
+            </p>
+
+            <p class="hint no_password_entry">
+              <%- gettext('Finishing signing into <strong class="website"></strong>.') %>
+            </p>
 
             <ul class="inputs password_entry">
                 <li>
@@ -46,7 +58,9 @@
             </ul>
 
             <div class="submit cf password_entry">
-                <button><%= gettext('Finish') %></button>
+                <button>
+                  <%- gettext('Finish and return to <span class="website"></span>') %>
+                </button>
             </div>
 
 
@@ -57,7 +71,7 @@
                 <%- gettext('<strong class="email">Your address</strong> has been verified!') %>
 
                 <p class="siteinfo">
-                  <%= gettext('Your new address is set up and you should now be signed in. You may now close this window and go back to') %> <strong class="website"></strong>
+                  <%= gettext('Your new address is set up and you should now be signed in. You may now close this window.') %>
                 </p>
             </p>
         </div>

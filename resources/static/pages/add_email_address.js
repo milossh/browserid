@@ -8,12 +8,17 @@ BrowserID.addEmailAddress = (function() {
 
   var ANIMATION_TIME=250,
       bid = BrowserID,
+      dom = bid.DOM,
       user = bid.User,
       storage = bid.Storage,
       errors = bid.Errors,
       pageHelpers = bid.PageHelpers,
-      dom = bid.DOM,
+      helpers = bid.Helpers,
+      complete = helpers.complete,
+      doc,
       token,
+      redirectTimeout,
+      redirectTo,
       sc;
 
   function showError(el, oncomplete) {
@@ -22,16 +27,12 @@ BrowserID.addEmailAddress = (function() {
   }
 
   function emailRegistrationComplete(oncomplete, info) {
-    function complete(status) {
-      oncomplete && oncomplete(status);
-    }
-
     var valid = info.valid;
     if (valid) {
-      emailRegistrationSuccess(info, complete.curry(true));
+      emailRegistrationSuccess(info, complete.curry(oncomplete, true));
     }
     else {
-      showError("#cannotconfirm", complete.curry(false));
+      showError("#cannotconfirm", complete.curry(oncomplete, false));
     }
   }
 
@@ -40,6 +41,7 @@ BrowserID.addEmailAddress = (function() {
 
     if (info.origin) {
       dom.setInner(".website", info.origin);
+
       $(".siteinfo").show();
     }
   }
@@ -50,8 +52,15 @@ BrowserID.addEmailAddress = (function() {
     showRegistrationInfo(info);
 
     setTimeout(function() {
-      pageHelpers.replaceFormWithNotice("#congrats", oncomplete);
-    }, 2000);
+      if(redirectTo) {
+        localStorage.removeItem("redirectTo");
+        doc.location = redirectTo;
+        complete(oncomplete);
+      }
+      else {
+        pageHelpers.replaceFormWithNotice("#congrats", oncomplete);
+      }
+    }, redirectTimeout);
   }
 
   function userMustEnterPassword(info) {
@@ -77,7 +86,7 @@ BrowserID.addEmailAddress = (function() {
       );
     }
     else {
-      oncomplete && oncomplete(false);
+      complete(oncomplete, false);
     }
   }
 
@@ -88,32 +97,37 @@ BrowserID.addEmailAddress = (function() {
 
         if(userMustEnterPassword(info)) {
           dom.addClass("body", "enter_password");
-          oncomplete(true);
+          complete(oncomplete, true);
         }
         else {
+          dom.addClass("body", "no_password");
           verifyWithoutPassword(oncomplete);
         }
       }
       else {
         showError("#cannotconfirm");
-        oncomplete(false);
+        complete(oncomplete, false);
       }
     }, pageHelpers.getFailure(errors.getTokenInfo, oncomplete));
   }
 
   var Module = bid.Modules.PageModule.extend({
     start: function(options) {
-      function oncomplete(status) {
-        options.ready && options.ready(status);
-      }
+      var self=this;
 
-      this.checkRequired(options, "token");
+      self.checkRequired(options, "token");
 
       token = options.token;
+      doc = options.document || window.document;
+      redirectTimeout = options.redirect_timeout || 2000;
 
-      startVerification(oncomplete);
+      // Save self off early because if the user is not logged in, the storage
+      // info will be cleared by time they hit submit.
+      redirectTo = localStorage.redirectTo;
 
-      sc.start.call(this, options);
+      sc.start.call(self, options);
+
+      startVerification(options.ready);
     },
 
     submit: verifyWithPassword

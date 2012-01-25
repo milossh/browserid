@@ -9,13 +9,15 @@
   var bid = BrowserID,
       storage = bid.Storage,
       xhr = bid.Mocks.xhr,
+      WindowMock = bid.Mocks.WindowMock,
       dom = bid.DOM,
       testHelpers = bid.TestHelpers,
       validToken = true,
       controller,
       config = {
         token: "token"
-      };
+      },
+      docMock;
 
   module("pages/add_email_address", {
     setup: function() {
@@ -30,9 +32,12 @@
   });
 
   function createController(options, callback) {
+    docMock = new WindowMock().document;
     controller = BrowserID.addEmailAddress.create();
     options = options || {};
+    options.document = docMock;
     options.ready = callback;
+    options.redirect_timeout = 1;
     controller.start(options);
   }
 
@@ -54,30 +59,18 @@
     ok($("#cannotconfirm").is(":visible"), "cannot confirm box is visible");
   }
 
-  test("start with missing token", function() {
-    var error;
-    try {
-      createController({});
-    } catch(e) {
-      error = e;
-    }
-
-    equal(error, "missing config option: token", "correct error thrown");
-  });
-
-  asyncTest("no password: start with good token and site", function() {
+  asyncTest("no password: start with good token and site - site info updated", function() {
     storage.setStagedOnBehalfOf("browserid.org");
 
     createController(config, function() {
       testEmail();
       ok($(".siteinfo").is(":visible"), "siteinfo is visible when we say what it is");
-      equal($(".website:nth(0)").text(), "browserid.org", "origin is updated");
       equal($("body").hasClass("complete"), true, "body has complete class");
       start();
     });
   });
 
-  asyncTest("no password: start with good token and nosite", function() {
+  asyncTest("no password: start with good token and nosite - site info not visible", function() {
     createController(config, function() {
       testEmail();
       equal($(".siteinfo").is(":visible"), false, "siteinfo is not visible without having it");
@@ -86,7 +79,7 @@
     });
   });
 
-  asyncTest("no password: start with bad token", function() {
+  asyncTest("no password: start with bad token - cannot confirm message shown", function() {
     xhr.useResult("invalid");
 
     createController(config, function() {
@@ -95,7 +88,7 @@
     });
   });
 
-  asyncTest("no password: start with emailForVerficationToken XHR failure", function() {
+  asyncTest("no password: start with emailForVerficationToken XHR failure - error visible", function() {
     xhr.useResult("ajaxError");
     createController(config, function() {
       testHelpers.testErrorVisible();
@@ -103,7 +96,7 @@
     });
   });
 
-  asyncTest("password: first secondary address added", function() {
+  asyncTest("password: first secondary address added - enter_password class added to body", function() {
     xhr.useResult("needsPassword");
     createController(config, function() {
       equal($("body").hasClass("enter_password"), true, "enter_password added to body");
@@ -112,28 +105,28 @@
     });
   });
 
-  asyncTest("password: missing password", function() {
+  asyncTest("password: missing password - tooltip visible", function() {
     $("#password").val();
     $("#vpassword").val("password");
 
     expectTooltipVisible();
   });
 
-  asyncTest("password: missing verify password", function() {
+  asyncTest("password: missing verify password - tooltip visible", function() {
     $("#password").val("password");
     $("#vpassword").val();
 
     expectTooltipVisible();
   });
 
-  asyncTest("password: too short of a password", function() {
+  asyncTest("password: too short of a password - tooltip visible", function() {
     $("#password").val("pass");
     $("#vpassword").val("pass");
 
     expectTooltipVisible();
   });
 
-  asyncTest("password: too long of a password", function() {
+  asyncTest("password: too long of a password - tooltip visible", function() {
     var tooLong = "";
     for(var i = 0; i < 81; i++) {
       tooLong += (i % 10);
@@ -144,14 +137,25 @@
     expectTooltipVisible();
   });
 
-  asyncTest("password: mismatched passwords", function() {
+  asyncTest("password: mismatched passwords - tooltip visible", function() {
     $("#password").val("passwords");
     $("#vpassword").val("password");
 
     expectTooltipVisible();
   });
 
-  asyncTest("password: good password", function() {
+  asyncTest("password: good passwords, bad token - cannot confirm", function() {
+    $("#password").val("password");
+    $("#vpassword").val("password");
+
+    xhr.useResult("invalid");
+    createController(config, function() {
+      testCannotConfirm();
+      start();
+    });
+  });
+
+  asyncTest("password: good passwords, good token, no redirectTo - body has complete class", function() {
     $("#password").val("password");
     $("#vpassword").val("password");
 
@@ -164,14 +168,17 @@
     });
   });
 
-  asyncTest("password: good password bad token", function() {
+  asyncTest("password: good passwords, good token, redirectTo - page is redirected", function() {
     $("#password").val("password");
     $("#vpassword").val("password");
+    localStorage.redirectTo = "redirect_url";
 
-    xhr.useResult("invalid");
     createController(config, function() {
-      testCannotConfirm();
-      start();
+      controller.submit(function(status) {
+        equal(docMock.location, "redirect_url", "document redirected to redirect_url");
+        equal(localStorage.redirectTo, null, "redirectTo has been cleared");
+        start();
+      });
     });
   });
 

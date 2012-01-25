@@ -101,7 +101,10 @@
 
     subscribe("window_unload", function() {
       if (!self.success) {
-        bid.Storage.setStagedOnBehalfOf("");
+        //storage.setStagedOnBehalfOf("");
+        if(self.confirmationEmail) {
+          localStorage.redirectTo = user.getOrigin();
+        }
         startState("doCancel");
       }
     });
@@ -130,11 +133,14 @@
     });
 
     subscribe("user_staged", function(msg, info) {
+      self.confirmationEmail = info.email;
       startState("doConfirmUser", info.email);
     });
 
     subscribe("user_confirmed", function() {
-      startState("doEmailConfirmed");
+      var email = self.confirmationEmail;
+      self.confirmationEmail = null;
+      startState("doEmailConfirmed", { email: email });
     });
 
     subscribe("primary_user", function(msg, info) {
@@ -251,7 +257,8 @@
     subscribe("assertion_generated", function(msg, info) {
       self.success = true;
       if (info.assertion !== null) {
-        startState("doAssertionGenerated", info.assertion);
+        storage.setStagedOnBehalfOf("");
+        startState("doAssertionGenerated", info);
       }
       else {
         startState("doPickEmail");
@@ -263,11 +270,14 @@
     });
 
     subscribe("email_staged", function(msg, info) {
+      self.confirmationEmail = info.email;
       startState("doConfirmEmail", info.email);
     });
 
     subscribe("email_confirmed", function() {
-      startState("doEmailConfirmed");
+      var email = self.confirmationEmail;
+      self.confirmationEmail = null;
+      startState("doEmailConfirmed", { email: email });
     });
 
     subscribe("cancel_state", function(msg, info) {

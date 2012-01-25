@@ -23,6 +23,7 @@ BrowserID.Storage = (function() {
     storage.removeItem("stagedOnBehalfOf");
     storage.removeItem("siteInfo");
     storage.removeItem("managePage");
+    storage.removeItem("redirectTo");
   }
 
   function getEmails() {

@@ -11,13 +11,15 @@ BrowserID.Class = (function() {
   }
 
   function extend(sup, extension) {
+    var mixins = [].slice.call(arguments, 1);
+
     // No superclass
-    if(!extension) {
-      extension = sup;
+    if(!mixins.length) {
+      mixins = [sup];
       sup = null;
     }
 
-    var subclass = extension.hasOwnProperty("constructor") ? extension.constructor : function() {};
+    var subclass = mixins[0].hasOwnProperty("constructor") ? mixins[0].constructor : function() {};
 
     if(sup) {
       // there is a superclass, set it up.
@@ -32,8 +34,10 @@ BrowserID.Class = (function() {
       subclass.prototype = {};
     }
 
-    for(var key in extension) {
-      subclass.prototype[key] = extension[key];
+    for(var i = 0, mixin; mixin = mixins[i]; ++i) {
+      for(var key in mixin) {
+        subclass.prototype[key] = mixin[key];
+      }
     }
     subclass.prototype.constructor = subclass;
 
